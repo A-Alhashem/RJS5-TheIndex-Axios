@@ -1,28 +1,46 @@
 import React, { Component } from "react";
 import axios from "axios";
+import Loading from "./Loading";
 
-import authors from "./data.js";
+// import authors from "./data.js";
 
 // Components
 import Sidebar from "./Sidebar";
 import SearchBar from "./SearchBar";
 import AuthorsList from "./AuthorsList";
 import AuthorDetail from "./AuthorDetail";
+import { createSecureContext } from "tls";
 
 class App extends Component {
   constructor(props) {
     super(props);
     this.state = {
       currentAuthor: {},
-      filteredAuthors: []
+      filteredAuthors: [],
+      authors: [],
+      loading: true
     };
     this.selectAuthor = this.selectAuthor.bind(this);
     this.unselectAuthor = this.unselectAuthor.bind(this);
     this.filterAuthors = this.filterAuthors.bind(this);
   }
 
-  selectAuthor(author) {
-    this.setState({ currentAuthor: author });
+  componentDidMount() {
+    let asyncCall = axios
+      .get("https://the-index-api.herokuapp.com/api/authors/")
+      .then(res => res.data)
+      .then(incomingAuthors => this.setState({ authors: incomingAuthors }))
+      .then(() => this.setState({ loading: false }))
+      .catch(err => console.log(err));
+  }
+
+  selectAuthor(id) {
+    //axios request
+    axios
+      .get(`https://the-index-api.herokuapp.com/api/authors/${id}`)
+      .then(res => res.data)
+      .then(author => this.setState({ currentAuthor: author, loading: false }))
+      .catch(err => console.log(err));
   }
 
   unselectAuthor() {
@@ -31,7 +49,7 @@ class App extends Component {
 
   filterAuthors(query) {
     query = query.toLowerCase();
-    let filteredAuthors = authors.filter(author => {
+    let filteredAuthors = this.state.authors.filter(author => {
       return `${author.first_name} ${author.last_name}`.includes(query);
     });
     this.setState({ filteredAuthors: filteredAuthors });
@@ -43,12 +61,26 @@ class App extends Component {
     } else if (this.state.filteredAuthors[0]) {
       return (
         <AuthorsList
-          authors={this.state.filteredAuthors}
+          authors={this.state.authors}
           selectAuthor={this.selectAuthor}
         />
       );
     } else {
-      return <AuthorsList authors={authors} selectAuthor={this.selectAuthor} />;
+      if (this.state.loading) {
+        return (
+          <div>
+            <h1>Loading</h1>
+            <Loading />
+          </div>
+        );
+      } else {
+        return (
+          <AuthorsList
+            authors={this.state.authors}
+            selectAuthor={this.selectAuthor}
+          />
+        );
+      }
     }
   }
 
