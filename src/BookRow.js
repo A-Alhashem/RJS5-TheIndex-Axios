@@ -1,11 +1,14 @@
 import React, { Component } from "react";
+import AuthorCard from "./AuthorCard";
 
 class BookRow extends Component {
   render() {
     let book = this.props.book;
     // let author = this.props.author;
     const authors = book.authors.map(author => (
-      <div className="row">{author.name}</div>
+      <div className="row" key={author.id}>
+        {author.name}
+      </div>
     ));
 
     console.log(book);
